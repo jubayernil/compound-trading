@@ -102,6 +102,13 @@
         border: none;
       }
 
+      .data-row {
+        background-color: #ffffff;
+      }
+      .data-row.highlighted {
+        background-color: #ccffcc;
+      } /* Light green background */
+
       @media screen and (max-width: 600px) {
         form,
         table {
@@ -110,7 +117,6 @@
       }
     </style>
   </head>
-
   <body>
     <form id="tradingForm">
       <h3>Compound Trade Calculator</h3>
@@ -153,6 +159,7 @@
 
     <table>
       <tr>
+        <th>Check</th>
         <th>Level</th>
         <th>Current_Balance</th>
         <th>Risk_%</th>
@@ -167,6 +174,138 @@
       </tr>
       <tbody id="resultsTable"></tbody>
     </table>
+
+    <script>
+      document
+        .getElementById("calculate")
+        .addEventListener("click", function () {
+          let accountBalance = parseFloat(
+            document.getElementById("startingBalance").value
+          );
+          const riskPerTrade = parseFloat(
+            document.getElementById("percentageRisk").value
+          );
+          const stopLossPips = parseFloat(
+            document.getElementById("stopLossPips").value
+          );
+          const takeProfitPips = parseFloat(
+            document.getElementById("tpPips").value
+          );
+          const totalTrades = 30; // Total number of trades to calculate
+
+          const resultsTable = document.getElementById("resultsTable");
+          resultsTable.innerHTML = ""; // Clear existing table rows
+
+          let tableData = []; // Initialize an array to hold the data for local storage
+
+          for (let tradeNumber = 1; tradeNumber <= totalTrades; tradeNumber++) {
+            const amountAtRisk = accountBalance * (riskPerTrade / 100);
+            const profitAmount = amountAtRisk * (takeProfitPips / stopLossPips);
+            const newBalance = accountBalance + profitAmount;
+            const positionSize = (amountAtRisk / stopLossPips) * 0.1; // Simplified assumption
+            const ROI = (takeProfitPips / stopLossPips).toFixed(2); // Adjusted ROI calculation
+
+            const row = `<tr class="data-row">
+<td><input type="checkbox" class="row-checkbox" onchange="toggleRowHighlight(this, ${
+              tradeNumber - 1
+            })" /></td>
+<td>${tradeNumber}</td>
+<td>$${accountBalance.toFixed(2)}</td>
+<td>${riskPerTrade}%</td>
+<td>$${amountAtRisk.toFixed(2)}</td>
+<td>${((profitAmount / accountBalance) * 100).toFixed(2)}%</td>
+<td>$${profitAmount.toFixed(2)}</td>
+<td>${stopLossPips}</td>
+<td>${takeProfitPips}</td>
+<td>${ROI}</td>
+<td>${positionSize.toFixed(2)}</td>
+<td>$${newBalance.toFixed(2)}</td>
+</tr>`;
+
+            resultsTable.innerHTML += row; // Append the row to the table
+
+            // Collect data for storage, including checkbox state (defaulted to false initially)
+            tableData.push({
+              tradeNumber,
+              accountBalance: accountBalance.toFixed(2),
+              riskPerTrade,
+              amountAtRisk: amountAtRisk.toFixed(2),
+              profitPercentage: ((profitAmount / accountBalance) * 100).toFixed(
+                2
+              ),
+              profitAmount: profitAmount.toFixed(2),
+              stopLossPips,
+              takeProfitPips,
+              ROI,
+              positionSize: positionSize.toFixed(2),
+              newBalance: newBalance.toFixed(2),
+              checked: false, // Default state of checkbox
+            });
+
+            // Update accountBalance for next trade
+            accountBalance = newBalance;
+          }
+
+          // Save the generated table data to Local Storage
+          saveDataToLocalStorage(tableData);
+        });
+
+      function toggleRowHighlight(checkbox, index) {
+        const row = checkbox.parentNode.parentNode; // Get the parent row of the checkbox
+        if (checkbox.checked) {
+          row.classList.add("highlighted");
+        } else {
+          row.classList.remove("highlighted");
+        }
+        // Update the checked state in the stored data
+        updateDataCheckedState(index, checkbox.checked);
+      }
+
+      function saveDataToLocalStorage(data) {
+        localStorage.setItem("tableData", JSON.stringify(data));
+      }
+
+      function loadDataFromLocalStorage() {
+        const data = JSON.parse(localStorage.getItem("tableData"));
+        if (data) {
+          const resultsTable = document.getElementById("resultsTable");
+          resultsTable.innerHTML = ""; // Clear existing table rows
+          data.forEach((item, index) => {
+            const row = `<tr class="data-row ${
+              item.checked ? "highlighted" : ""
+            }">
+<td><input type="checkbox" class="row-checkbox" ${
+              item.checked ? "checked" : ""
+            } onchange="toggleRowHighlight(this, ${index})" /></td>
+<td>${item.tradeNumber}</td>
+<td>$${item.accountBalance}</td>
+<td>${item.riskPerTrade}%</td>
+<td>$${item.amountAtRisk}</td>
+<td>${item.profitPercentage}%</td>
+<td>$${item.profitAmount}</td>
+<td>${item.stopLossPips}</td>
+<td>${item.takeProfitPips}</td>
+<td>${item.ROI}</td>
+<td>${item.positionSize}</td>
+<td>$${item.newBalance}</td>
+</tr>`;
+            resultsTable.innerHTML += row;
+          });
+        }
+      }
+
+      function updateDataCheckedState(index, checked) {
+        const data = JSON.parse(localStorage.getItem("tableData"));
+        if (data && data[index]) {
+          data[index].checked = checked;
+          saveDataToLocalStorage(data);
+        }
+      }
+
+      // Call loadDataFromLocalStorage() to load the table data when the page loads
+      window.onload = function () {
+        loadDataFromLocalStorage();
+      };
+    </script>
   </body>
 </html>
-<script src="trade-cal.js"></script>
