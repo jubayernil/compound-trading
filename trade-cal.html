@@ -54,7 +54,7 @@
       }
       #calculate {
         flex-basis: 100%;
-        background-color: #1976d2;
+        background-color: #08a337;
         color: white;
         padding: 10px 20px;
         border: none;
@@ -65,7 +65,7 @@
         margin: 5px;
       }
       #calculate:hover {
-        background-color: #1565c0;
+        background-color: #0bc743;
       }
       table {
         width: 100%;
@@ -83,9 +83,9 @@
         text-align: left;
       }
       th {
-        background-color: #2196f3;
+        background-color: #08a337;
         color: white;
-        border-color: #1976d2;
+        border-color: #08a337;
       }
       tbody tr:last-child td {
         border: none;
@@ -178,7 +178,7 @@
           const takeProfitPips = parseFloat(
             document.getElementById("tpPips").value
           );
-          const totalTrades = 30; // Total number of trades to calculate
+          const totalTrades = 30; // Adjusted for demonstration purposes
 
           const resultsTable = document.getElementById("resultsTable");
           resultsTable.innerHTML = ""; // Clear existing table rows
@@ -211,7 +211,6 @@
 
             resultsTable.innerHTML += row; // Append the row to the table
 
-            // Collect data for storage, including checkbox state (defaulted to false initially)
             tableData.push({
               tradeNumber,
               accountBalance: accountBalance.toFixed(2),
@@ -229,27 +228,20 @@
               checked: false, // Default state of checkbox
             });
 
-            // Update accountBalance for next trade
-            accountBalance = newBalance;
+            accountBalance = newBalance; // Update accountBalance for next trade
           }
 
-          // Save the generated table data to Local Storage
           saveDataToLocalStorage(tableData);
-
-          // Update input fields with the last calculated values as default
-          document.getElementById("startingBalance").value =
-            accountBalance.toFixed(2);
-          // Other inputs remain unchanged by the calculation process
+          saveInputValues(); // Save the current input values to Local Storage
         });
 
       function toggleRowHighlight(checkbox, index) {
-        const row = checkbox.parentNode.parentNode; // Get the parent row of the checkbox
+        const row = checkbox.parentNode.parentNode;
         if (checkbox.checked) {
           row.classList.add("highlighted");
         } else {
           row.classList.remove("highlighted");
         }
-        // Update the checked state in the stored data
         updateDataCheckedState(index, checkbox.checked);
       }
 
@@ -261,7 +253,7 @@
         const data = JSON.parse(localStorage.getItem("tableData"));
         if (data) {
           const resultsTable = document.getElementById("resultsTable");
-          resultsTable.innerHTML = ""; // Clear existing table rows
+          resultsTable.innerHTML = "";
           data.forEach((item, index) => {
             const row = `<tr class="data-row ${
               item.checked ? "highlighted" : ""
@@ -294,8 +286,32 @@
         }
       }
 
+      function saveInputValues() {
+        const inputs = {
+          startingBalance: document.getElementById("startingBalance").value,
+          percentageRisk: document.getElementById("percentageRisk").value,
+          stopLossPips: document.getElementById("stopLossPips").value,
+          tpPips: document.getElementById("tpPips").value,
+        };
+        localStorage.setItem("inputValues", JSON.stringify(inputs));
+      }
+
+      function loadInputValues() {
+        const storedValues = JSON.parse(localStorage.getItem("inputValues"));
+        if (storedValues) {
+          document.getElementById("startingBalance").value =
+            storedValues.startingBalance;
+          document.getElementById("percentageRisk").value =
+            storedValues.percentageRisk;
+          document.getElementById("stopLossPips").value =
+            storedValues.stopLossPips;
+          document.getElementById("tpPips").value = storedValues.tpPips;
+        }
+      }
+
       window.onload = function () {
         loadDataFromLocalStorage();
+        loadInputValues();
       };
     </script>
   </body>
